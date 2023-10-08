@@ -1,5 +1,3 @@
-use rayon::prelude::*;
-
 const BOARD_SIZE: i32 = 50515093;
 const S_0: i32 = 290797;
 
@@ -62,23 +60,19 @@ fn main() {
     // dbg!(&rows[0..50]);
     // dbg!(&rows.len());
 
-    // let mut grand_total: i64 = 0;
+    let mut grand_total: i64 = 0;
 
-    // for (index, row) in rows.iter().enumerate() {
-    //     grand_total += (row.max_y - row.min_y) as i64
-    //         * calculate_row_clock_hands_sum((row.min_y + row.max_y) / 2);
-    // }
-
-    let grand_total = rows
-        .into_par_iter()
-        .fold(
-            || 0i64,
-            |acc, row| {
-                acc + (row.max_y - row.min_y) as i64
-                    * calculate_row_clock_hands_sum((row.min_y + row.max_y) / 2)
-            },
-        )
-        .sum::<i64>();
+    let mut index = 100_000;
+    while index < rows.len() {
+        let row = rows.get(index).unwrap();
+        // println!("Calculating row from {} to {}", row.min_y, row.max_y);
+        if index % 1 == 0 {
+            println!("calculating row {}", index);
+        }
+        grand_total += (row.max_y - row.min_y) as i64
+            * calculate_row_clock_hands_sum((row.min_y + row.max_y) / 2);
+        index += 1;
+    }
     // dbg!(division_points);
 
     println!("the grand total is {}", grand_total);
