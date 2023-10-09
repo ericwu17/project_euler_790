@@ -1,4 +1,5 @@
 use rayon::prelude::*;
+use std::time::Instant;
 
 const BOARD_SIZE: i32 = 50515093;
 const S_0: i32 = 290797;
@@ -62,16 +63,50 @@ fn main() {
     // dbg!(&rows[0..50]);
     // dbg!(&rows.len());
 
-    let grand_total = rows
-        .into_par_iter()
-        .fold(
-            || 0i64,
-            |acc, row| {
-                acc + (row.max_y - row.min_y) as i64
-                    * calculate_row_clock_hands_sum((row.min_y + row.max_y) / 2)
-            },
-        )
-        .sum::<i64>();
+    let mut rows_list = Vec::new();
+    let num_chunks = 50;
+    let items_per_chunk = rows.len() / num_chunks;
+    for i in 0..num_chunks {
+        // clone NUM_ROWS
+        let mut curr_row_chunk = Vec::new();
+        for _ in 0..items_per_chunk {
+            curr_row_chunk.push(rows.pop().unwrap());
+        }
+        if i == num_chunks - 1 {
+            while !rows.is_empty() {
+                curr_row_chunk.push(rows.pop().unwrap());
+            }
+        }
+
+        rows_list.push(curr_row_chunk);
+    }
+
+    println!("finished setting up chunks");
+
+    let mut grand_total = 0i64;
+
+    let mut prev_instant = Instant::now();
+
+    for (index, rows) in rows_list.iter().enumerate() {
+        grand_total += rows
+            .into_par_iter()
+            .fold(
+                || 0i64,
+                |acc, row| {
+                    acc + (row.max_y - row.min_y) as i64
+                        * calculate_row_clock_hands_sum((row.min_y + row.max_y) / 2)
+                },
+            )
+            .sum::<i64>();
+        let now = Instant::now();
+        println!(
+            "finished chunk {} of {}. Last chunk took {} seconds",
+            index,
+            num_chunks,
+            (now - prev_instant).as_secs()
+        );
+        prev_instant = now;
+    }
     // dbg!(division_points);
 
     println!("the grand total is {}", grand_total);
